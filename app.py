@@ -1,10 +1,12 @@
 from flask import Flask, request, render_template
 from flask_cors import cross_origin
-import sklearn
 import pickle
 import pandas as pd
+import os
 
 app = Flask(__name__)
+
+# Load model
 model = pickle.load(open("flight_rf.pkl", "rb"))
 
 
@@ -23,265 +25,49 @@ def predict():
         date_dep = request.form["Dep_Time"]
         Journey_day = int(pd.to_datetime(date_dep, format="%Y-%m-%dT%H:%M").day)
         Journey_month = int(pd.to_datetime(date_dep, format="%Y-%m-%dT%H:%M").month)
-        # print("Journey Date : ",Journey_day, Journey_month)
 
         # Departure
         Dep_hour = int(pd.to_datetime(date_dep, format="%Y-%m-%dT%H:%M").hour)
         Dep_min = int(pd.to_datetime(date_dep, format="%Y-%m-%dT%H:%M").minute)
-        # print("Departure : ",Dep_hour, Dep_min)
 
         # Arrival
         date_arr = request.form["Arrival_Time"]
         Arrival_hour = int(pd.to_datetime(date_arr, format="%Y-%m-%dT%H:%M").hour)
         Arrival_min = int(pd.to_datetime(date_arr, format="%Y-%m-%dT%H:%M").minute)
-        # print("Arrival : ", Arrival_hour, Arrival_min)
 
         # Duration
         dur_hour = abs(Arrival_hour - Dep_hour)
         dur_min = abs(Arrival_min - Dep_min)
-        # print("Duration : ", dur_hour, dur_min)
 
         # Total Stops
         Total_stops = int(request.form["stops"])
-        # print(Total_stops)
 
-        # Airline
-        # AIR ASIA = 0 (not in column)
+        # Airline encoding
         airline = request.form['airline']
-        if (airline == 'Jet Airways'):
-            Jet_Airways = 1
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
+        airlines = [
+            'Jet Airways','IndiGo','Air India','Multiple carriers','SpiceJet',
+            'Vistara','GoAir','Multiple carriers Premium economy',
+            'Jet Airways Business','Vistara Premium economy','Trujet'
+        ]
+        airline_dict = {name: 0 for name in airlines}
+        if airline in airline_dict:
+            airline_dict[airline] = 1
 
-        elif (airline == 'IndiGo'):
-            Jet_Airways = 0
-            IndiGo = 1
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline == 'Air India'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 1
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline == 'Multiple carriers'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 1
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline == 'SpiceJet'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 1
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline == 'Vistara'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 1
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline == 'GoAir'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 1
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline == 'Multiple carriers Premium economy'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 1
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline == 'Jet Airways Business'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 1
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-        elif (airline == 'Vistara Premium economy'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 1
-            Trujet = 0
-
-        elif (airline == 'Trujet'):
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 1
-
-        else:
-            Jet_Airways = 0
-            IndiGo = 0
-            Air_India = 0
-            Multiple_carriers = 0
-            SpiceJet = 0
-            Vistara = 0
-            GoAir = 0
-            Multiple_carriers_Premium_economy = 0
-            Jet_Airways_Business = 0
-            Vistara_Premium_economy = 0
-            Trujet = 0
-
-
+        # Source encoding
         Source = request.form["Source"]
-        if (Source == 'Delhi'):
-            s_Delhi = 1
-            s_Kolkata = 0
-            s_Mumbai = 0
-            s_Chennai = 0
+        sources = ['Delhi','Kolkata','Mumbai','Chennai']
+        source_dict = {name: 0 for name in sources}
+        if Source in source_dict:
+            source_dict[Source] = 1
 
-        elif (Source == 'Kolkata'):
-            s_Delhi = 0
-            s_Kolkata = 1
-            s_Mumbai = 0
-            s_Chennai = 0
+        # Destination encoding
+        Destination = request.form["Destination"]
+        destinations = ['Cochin','Delhi','New_Delhi','Hyderabad','Kolkata']
+        dest_dict = {name: 0 for name in destinations}
+        if Destination in dest_dict:
+            dest_dict[Destination] = 1
 
-        elif (Source == 'Mumbai'):
-            s_Delhi = 0
-            s_Kolkata = 0
-            s_Mumbai = 1
-            s_Chennai = 0
-
-        elif (Source == 'Chennai'):
-            s_Delhi = 0
-            s_Kolkata = 0
-            s_Mumbai = 0
-            s_Chennai = 1
-
-        else:
-            s_Delhi = 0
-            s_Kolkata = 0
-            s_Mumbai = 0
-            s_Chennai = 0
-
-
-        Source = request.form["Destination"]
-        if (Source == 'Cochin'):
-            d_Cochin = 1
-            d_Delhi = 0
-            d_New_Delhi = 0
-            d_Hyderabad = 0
-            d_Kolkata = 0
-
-        elif (Source == 'Delhi'):
-            d_Cochin = 0
-            d_Delhi = 1
-            d_New_Delhi = 0
-            d_Hyderabad = 0
-            d_Kolkata = 0
-
-        elif (Source == 'New_Delhi'):
-            d_Cochin = 0
-            d_Delhi = 0
-            d_New_Delhi = 1
-            d_Hyderabad = 0
-            d_Kolkata = 0
-
-        elif (Source == 'Hyderabad'):
-            d_Cochin = 0
-            d_Delhi = 0
-            d_New_Delhi = 0
-            d_Hyderabad = 1
-            d_Kolkata = 0
-
-        elif (Source == 'Kolkata'):
-            d_Cochin = 0
-            d_Delhi = 0
-            d_New_Delhi = 0
-            d_Hyderabad = 0
-            d_Kolkata = 1
-
-        else:
-            d_Cochin = 0
-            d_Delhi = 0
-            d_New_Delhi = 0
-            d_Hyderabad = 0
-            d_Kolkata = 0
-
-
-
+        # Prediction
         prediction = model.predict([[
             Total_stops,
             Journey_day,
@@ -292,35 +78,39 @@ def predict():
             Arrival_min,
             dur_hour,
             dur_min,
-            Air_India,
-            GoAir,
-            IndiGo,
-            Jet_Airways,
-            Jet_Airways_Business,
-            Multiple_carriers,
-            Multiple_carriers_Premium_economy,
-            SpiceJet,
-            Trujet,
-            Vistara,
-            Vistara_Premium_economy,
-            s_Chennai,
-            s_Delhi,
-            s_Kolkata,
-            s_Mumbai,
-            d_Cochin,
-            d_Delhi,
-            d_Hyderabad,
-            d_Kolkata,
-            d_New_Delhi
+            airline_dict['Air India'],
+            airline_dict['GoAir'],
+            airline_dict['IndiGo'],
+            airline_dict['Jet Airways'],
+            airline_dict['Jet Airways Business'],
+            airline_dict['Multiple carriers'],
+            airline_dict['Multiple carriers Premium economy'],
+            airline_dict['SpiceJet'],
+            airline_dict['Trujet'],
+            airline_dict['Vistara'],
+            airline_dict['Vistara Premium economy'],
+            source_dict['Chennai'],
+            source_dict['Delhi'],
+            source_dict['Kolkata'],
+            source_dict['Mumbai'],
+            dest_dict['Cochin'],
+            dest_dict['Delhi'],
+            dest_dict['Hyderabad'],
+            dest_dict['Kolkata'],
+            dest_dict['New_Delhi']
         ]])
 
         output = round(prediction[0], 2)
 
-        return render_template('index.html', prediction_text="Your Flight price is Rs. {}".format(output))
+        return render_template(
+            'index.html',
+            prediction_text=f"Your Flight price is Rs. {output}"
+        )
 
     return render_template("index.html")
 
 
+# Render compatible run
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",port=5000)
-
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)

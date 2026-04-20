@@ -2,10 +2,16 @@ from flask import Flask, request, render_template
 import numpy as np
 import joblib
 import pandas as pd
+import os
 
 app = Flask(__name__)
 
-model = joblib.load("flight_model.joblib")
+# Load model with error handling
+try:
+    model = joblib.load("flight_model.joblib")
+except FileNotFoundError:
+    print("Warning: flight_model.joblib not found. Please upload the model file.")
+    model = None
 
 @app.route("/")
 def home():
@@ -14,6 +20,10 @@ def home():
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
+        if model is None:
+            return render_template("index.html",
+                                   prediction_text="Error: Model file not found")
+        
         data = request.form.to_dict()
 
         df = pd.DataFrame([{
@@ -37,4 +47,5 @@ def predict():
                                prediction_text=f"Error: {str(e)}")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
